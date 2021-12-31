@@ -1,0 +1,1 @@
+# react_internationalization_of_page
