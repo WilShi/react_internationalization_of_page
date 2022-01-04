@@ -9,7 +9,6 @@ import html
 import requests, json
 import pandas as pd
 
-# from requests.api import request
 
 def translate_cn_en(word, cn_en_dic):
 
@@ -45,21 +44,18 @@ def findChinese(ses, cn_en_dic):
     nocomm = re.findall("(.*?)//", ses)
     
     if nocomm:
-        ses = str().join(nocomm)
+        new_ses = str().join(nocomm)
+    else:
+        new_ses = ses
 
     xx = u"([\u4e00-\u9fff]+)"
     pattern = re.compile(xx)
-    results = pattern.findall(ses)
+    results = pattern.findall(new_ses)
 
     if results:
         # print(results)
         for word in results:
             wd = translate_cn_en(word, cn_en_dic)
-            # wd['cn'] = word
-            # new_word = str(translate_cn_en(word))
-            # wd['en'] = new_word
-            # key = 'LE_' + new_word.replace(' ', '_')
-            # wd['key'] = key
 
             ans.append(wd)
 
@@ -68,11 +64,11 @@ def findChinese(ses, cn_en_dic):
             f = ses.find(word[0])
 
             if ses[f-1] == "'" or ses[f-1] == '"' or ses[f-1] == "`":
-                ses = ses.replace(ses[f-1], '')
+                ses = ses.replace(ses[f-1], '', 1)
 
             e = ses.find(word[-1])
             if ses[e+1] == "'" or ses[e+1] == '"' or ses[e+1] == "`":
-                ses = ses.replace(ses[e+1], '')
+                ses = ses.replace(ses[e+1], '', 1)
 
             ses = ses.replace(word, key, 1)
 
@@ -167,8 +163,6 @@ def readFile(path, cn_en_dic):
 
     writeFile("new/{}".format(path), new_file)
 
-    # fileName = re.findall("[^/]+", path)[-1]
-    # fileName = fileName.replace('.', '_')
     fileName = path[2:]
     fileName = fileName.replace('/', '_')
     fileName = fileName.replace('.', '_')
@@ -241,7 +235,7 @@ def format_csv(path, appCode, creator):
             rows.append(subrow)
 
     dt = pd.DataFrame(rows, columns=head)
-    dt.to_excel("./new/keyPage/key.xlsx", index=0)
+    dt.to_excel("./new/keyPage/lang.xls", index=0)
     print("Excel格式文件导出成功！！！！")
 
 
@@ -283,7 +277,8 @@ if __name__ == '__main__':
             # mkdir("new/keyPage/key.csv")
             # allFile(".\conditions")
             # duplicative_csv("./new/keyPage/key.csv")
-            format_csv("./new/keyPage/key.csv", "point", "Huiyong Sun")
+            # format_csv("./new/keyPage/key.csv", "point", "Huiyong Sun")
+            pass
 
         elif sys.argv[1] == "path":
             if len(sys.argv) == 4:
@@ -298,5 +293,3 @@ if __name__ == '__main__':
         print({"error": 1, "msg": "python translate.py [test, path, format] file_path ['', dic_path(csv_file), appCode] ['', '', creator]"})
 
     
-
-    # TestReChinese()
