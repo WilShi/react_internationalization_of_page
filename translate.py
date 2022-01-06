@@ -32,8 +32,13 @@ def translate_cn_en(word, cn_en_dic):
 
     print("成功翻译‘{}’至‘{}’".format(word, html.unescape(result[0])))
     en = html.unescape(result[0])
-    wd = {"cn": word, "en": en, "key": "LE_"+en.replace(' ', '_')}
 
+    wd = {"cn": word, "en": en}
+
+    key = "LE_"+en.replace(' ', '_')
+    key = key.replace("'", '')
+    wd["key"] = key
+    
     return wd
 
 
@@ -48,7 +53,12 @@ def findChinese(ses, cn_en_dic):
     else:
         new_ses = ses
 
-    xx = u"([\u4e00-\u9fff]+)"
+    nocomm = re.findall("(.*?)\*", new_ses)
+    if nocomm:
+        new_ses = str().join(nocomm)
+
+
+    xx = u"([(（\-]*\w*[\u4e00-\u9fff]+[.。，,;；)）\/\、\-(（\d:：？?\u4e00-\u9fff\w]*[\u4e00-\u9fff]+[.。，,;；(（\-)）~？?\w\d]*)"
     pattern = re.compile(xx)
     results = pattern.findall(new_ses)
 
@@ -59,14 +69,14 @@ def findChinese(ses, cn_en_dic):
 
             ans.append(wd)
 
-            key = "$t(/*{}*/'".format(word) + wd.get("key") + "')"
+            key = "$t(/*{}*/'{}')".format(word, wd.get("key"))
             
             f = ses.find(word[0])
 
             if ses[f-1] == "'" or ses[f-1] == '"' or ses[f-1] == "`":
                 ses = ses.replace(ses[f-1], '', 1)
 
-            e = ses.find(word[-1])
+            e = ses.rfind(word[-1])
             if ses[e+1] == "'" or ses[e+1] == '"' or ses[e+1] == "`":
                 ses = ses.replace(ses[e+1], '', 1)
 
@@ -142,8 +152,8 @@ def readFile(path, cn_en_dic):
                     ses, lis = findChinese(line, cn_en_dic)
                 except Exception as error:
                     print("出现了问题：{}".format(str(error)))
-                    print("等待30秒重新连接网络！！！！！")
-                    time.sleep(30)
+                    print("等待10秒重新连接网络！！！！！")
+                    time.sleep(10)
                     ses, lis = findChinese(line, cn_en_dic)
                     
                 new_file += ses
@@ -159,14 +169,14 @@ def readFile(path, cn_en_dic):
     print("开始写入文件")
     print("*"*50)
 
-    writeCSV("new/keyPage/key.csv", csv_info)
-
-    writeFile("new/{}".format(path), new_file)
+    fn = path[2:path[2:].find('/')+2]
+    writeCSV("new_{}/keyPage/key.csv".format(fn), csv_info)
+    writeFile("new_{}/{}".format(fn, path), new_file)
 
     fileName = path[2:]
     fileName = fileName.replace('/', '_')
     fileName = fileName.replace('.', '_')
-    writeFile("new/logPage/{}_log.txt".format(fileName), log)
+    writeFile("new_{}/logPage/{}_log.txt".format(fn, fileName), log)
 
     print("翻译成功!!!!")
 
@@ -178,8 +188,8 @@ def startWork(new_path, cn_en_dic):
             readFile(new_path, cn_en_dic)
     except Exception as error:
         print("出现了问题：{}".format(str(error)))
-        print("等待50秒继续!!!!!!")
-        time.sleep(50)
+        print("等待10秒重新连接网络！！！！！")
+        time.sleep(10)
         if new_path[new_path.rfind('.')+1:] == 'js' or new_path[new_path.rfind('.')+1:] == 'jsx' or new_path[new_path.rfind('.')+1:] == 'tsx':
             print("路径 {} 的文件符合要求，开始运行程序......".format(new_path))
             readFile(new_path, cn_en_dic)
@@ -222,24 +232,30 @@ def allFile(path, cn_en_dic_path=''):
 
     
 def format_csv(path, appCode, creator):
+    print("开始执行将CSV文件制作从EXCEL格式文件......")
+
     head = ['appCode', 'langCode', 'langText', 'langType', 'createBy']
     rows = []
     csv_reader = csv.reader(open(path))
+
     for line in csv_reader:
-        # dup.append(line)
         if line and line != ['Key', 'Chinese', 'English']:
-            # print(line)
             subrow = [appCode, line[0], line[1], "cn", creator]
             rows.append(subrow)
             subrow = [appCode, line[0], line[2], "en", creator]
             rows.append(subrow)
 
     dt = pd.DataFrame(rows, columns=head)
-    dt.to_excel("./new/keyPage/lang.xls", index=0)
+    fn = path[2:path[2:].find('\\')+2]
+    dt.to_excel("./{}/keyPage/lang.xls".format(fn), index=0)
+
+    # print(pd.read_excel("./new/keyPage/lang.xls"))
+    print("="*50)
     print("Excel格式文件导出成功！！！！")
+    print("="*50)
 
 
-def duplicative_csv(path, appCode, creator):
+def duplicative_csv(path):
     print("开始给 {} 路径的文件去重......".format(path))
 
     dup = []
@@ -257,13 +273,15 @@ def duplicative_csv(path, appCode, creator):
 
     writer.writerows(dup[1:])
     csvfile.close
-    print("成功将 {} 文件去重！！！！".format(path))
 
-    print("开始执行将CSV文件制作从EXCEL格式文件......")
-    format_csv(path, appCode, creator)
     print("="*50)
-    print("CSV去重和EXCEL导出执行完毕！！！！")
+    print("成功将 {} 文件去重！！！！".format(path))
     print("="*50)
+
+    # print("="*50)
+    # print("CSV去重和EXCEL导出执行完毕！！！！")
+    # print("="*50)
+
 
 
 if __name__ == '__main__':
@@ -287,7 +305,11 @@ if __name__ == '__main__':
                 allFile(sys.argv[2])
 
         elif sys.argv[1] == "format":
-            duplicative_csv(sys.argv[2], sys.argv[3], sys.argv[4])
+            duplicative_csv(sys.argv[2])
+            format_csv(sys.argv[2], sys.argv[3], sys.argv[4])
+
+        else:
+            print({"error": 1, "msg": "python translate.py [test, path, format] file_path ['', dic_path(csv_file), appCode] ['', '', creator]"})
 
     else:
         print({"error": 1, "msg": "python translate.py [test, path, format] file_path ['', dic_path(csv_file), appCode] ['', '', creator]"})
