@@ -58,7 +58,7 @@ def findChinese(ses, cn_en_dic):
         new_ses = str().join(nocomm)
 
 
-    xx = u"([(（\-]*\w*[\u4e00-\u9fff]+[.。，,;；)）\/\、\-(（\d:：？?\u4e00-\u9fff\w]*[\u4e00-\u9fff]+[.。，,;；(（\-)）~？?\w\d]*)"
+    xx = u"([(（\-]*\w*[\u4e00-\u9fff]+[.。，,;；)）>=\/\、\-(（\d:：？?\u4e00-\u9fff\w]*[\u4e00-\u9fff]+[.。，,;；(（+=\-)）~？?\w\d]*)"
     pattern = re.compile(xx)
     results = pattern.findall(new_ses)
 
