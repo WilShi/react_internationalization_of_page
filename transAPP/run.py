@@ -1,7 +1,7 @@
-import sys, os
+import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Ui_view import Ui_Form
-from translate import translate
+from main import main
 
 
 class MyMainForm(QMainWindow, Ui_Form):
@@ -13,22 +13,21 @@ class MyMainForm(QMainWindow, Ui_Form):
 
     def display(self):
         react_path = self.react_lineEdit.text()
-        dic = self.dic_lineEdit.text()
+        dic = self.dic_lineEdit.text() if self.dic_lineEdit.text() else {}
 
         tag = self.tag_lineEdit.text()
         appcode = self.ac_lineEdit.text()
         creator = self.creator_lineEdit.text()
 
+        outputpath = self.outputpath_lineEdit.text() if self.outputpath_lineEdit.text() else '..'
+
         self.startButton.setText("国际化已经开始，请勿重复点击！！！")
         print(react_path, dic)
 
-        tran = translate(tag)
+        main(react_path, tag, dic=dic, appCode=appcode, creator=creator, outputpath=outputpath).start()
 
-        csvpath = tran.allFile(react_path, dic)
-
-        if csvpath:
-            tran.format_csv(csvpath, appcode,creator)
-            self.startButton.setText("国际化已经完成！！！")
+        
+        self.startButton.setText("国际化已经完成！！！")
 
 
 

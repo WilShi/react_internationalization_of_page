@@ -11,9 +11,13 @@ import pandas as pd
 
 class translate():
 
-    def __init__(self, tag) -> None:
+    def __init__(self, tag, filepath) -> None:
         self.tag = tag
         self.csvpath = ''
+        filepath = filepath.replace('\\', '/')
+        filepath = filepath[:-1] if filepath[-1] == '/' else filepath
+        filepath = filepath[filepath.rfind('/')+1:] if '/' in filepath else filepath
+        self.filepath = filepath
 
     def translate_cn_en(self, word, cn_en_dic):
 
@@ -113,7 +117,7 @@ class translate():
 
     def writeCSV(self, path, lis):
         self.mkdir(path)
-        csvfile = open(path, 'a+')
+        csvfile = open(path, 'a+', encoding='UTF-8')
         writer = csv.writer(csvfile)
         writer.writerow(['Key', 'Chinese', 'English'])
 
@@ -134,7 +138,7 @@ class translate():
         writer.writerows(data)
         csvfile.close
         print("成功写入文件至: {}".format(path))
-        self.duplicative_csv(path)
+        
         self.csvpath = path
 
 
@@ -176,14 +180,25 @@ class translate():
         print("开始写入文件")
         print("*"*50)
 
-        fn = path[2:path[2:].find('/')+2] if path[:2] == './' else path[:path.find('/')+2]
-        self.writeCSV("new_{}/keyPage/key.csv".format(fn), csv_info)
-        self.writeFile("new_{}/{}".format(fn, path), new_file)
+        # fn = path[2:path[2:].find('/')+2] if path[:2] == './' else path[:path.find('/')+2]
+        
+
+        self.writeCSV("new_{}/keyPage/key.csv".format(self.filepath), csv_info)
+
+        self.writeFile("new_{}/{}".format(self.filepath, path), new_file)
+
+
+        # new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # print(new_path, "&*"*100)
+        # self.writeFile("new_{}/{}".format(fn, path), new_file)
+
+        # path = '/' + path if path[:2] != './' or path[0] != '/' else path
+        # self.writeFile("{}/procFile{}".format(new_path, path), new_file)
 
         fileName = path[2:]
         fileName = fileName.replace('/', '_')
         fileName = fileName.replace('.', '_')
-        self.writeFile("new_{}/logPage/{}_log.txt".format(fn, fileName), log)
+        self.writeFile("new_{}/logPage/{}_log.txt".format(self.filepath, fileName), log)
 
         print("翻译成功!!!!")
 
@@ -241,12 +256,13 @@ class translate():
 
         
     def format_csv(self, path, appCode, creator):
+        self.duplicative_csv(path)
         print("开始执行将CSV文件制作从EXCEL格式文件......")
-        path = path.replace('\\', '/')
+        # path = path.replace('\\', '/')
 
         head = ['appCode', 'langCode', 'langText', 'langType', 'createBy']
         rows = []
-        csv_reader = csv.reader(open(path))
+        csv_reader = csv.reader(open(r'%s'%path))
 
         for line in csv_reader:
             if line and line != ['Key', 'Chinese', 'English']:
@@ -299,7 +315,7 @@ if __name__ == '__main__':
     # readFile("index.jsx")
 
     if len(sys.argv) > 2:
-        trans = translate('WE')
+        trans = translate('WE', sys.argv[2])
         if sys.argv[1] == "test": # 本区域用于unit test
             # translate_cn_en('测试运行')
             # mkdir("new/keyPage/key.csv")
